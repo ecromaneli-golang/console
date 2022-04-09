@@ -1,2 +1,2 @@
-# logger
+# Logger
 Go Logger Basic Implementation
