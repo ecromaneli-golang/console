@@ -20,7 +20,7 @@ Go Logger Basic Implementation
         log.Info("As simple as that")
 
         // Will print
-        "2022-04-08 22:58:45.735 -03:00 - INFO As simple as that"
+        "2022-04-08 22:58:45.735 -03:00 - INFO logname: As simple as that"
     }
 
 ```

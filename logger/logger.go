@@ -47,7 +47,7 @@ type logger struct {
 	dispatcher LogDispatcher
 }
 
-var dateFormat = "2006-01-02 15:04:05.999 Z07:00"
+var dateFormat = "2006-01-02 15:04:05.000 Z07:00"
 var logLevel uint8
 var isDefined bool
 
