@@ -7,148 +7,172 @@ import (
 	"time"
 )
 
+type Level uint8
+
 const (
-	LogLevelOff   uint8 = 0
-	LogLevelFatal uint8 = 5
-	LogLevelError uint8 = 10
-	LogLevelWarn  uint8 = 15
-	LogLevelInfo  uint8 = 20
-	LogLevelDebug uint8 = 25
-	LogLevelTrace uint8 = 30
-	LogLevelAll   uint8 = 255
+	LevelOff   Level = 0
+	LevelFatal Level = 5
+	LevelError Level = 10
+	LevelWarn  Level = 15
+	LevelInfo  Level = 20
+	LevelDebug Level = 25
+	LevelTrace Level = 30
+	LevelAll   Level = 255
 )
 
-var LogLevelStrById = map[uint8]string{
-	LogLevelAll:   "ALL",
-	LogLevelTrace: "TRACE",
-	LogLevelDebug: "DEBUG",
-	LogLevelInfo:  "INFO",
-	LogLevelWarn:  "WARN",
-	LogLevelError: "ERROR",
-	LogLevelFatal: "FATAL",
-	LogLevelOff:   "OFF",
+func (l *Level) String() string {
+	return stringByLevel[*l]
 }
 
-var LogLevelIdByStr = map[string]uint8{
-	"ALL":   LogLevelAll,
-	"TRACE": LogLevelTrace,
-	"DEBUG": LogLevelDebug,
-	"INFO":  LogLevelInfo,
-	"WARN":  LogLevelWarn,
-	"ERROR": LogLevelError,
-	"FATAL": LogLevelFatal,
-	"OFF":   LogLevelOff,
+func LevelFromString(level string) Level {
+	return levelByStr[level]
 }
 
-type LogDispatcher func(w io.Writer, name string, level uint8, a ...any)
+var stringByLevel = map[Level]string{
+	LevelAll:   "ALL",
+	LevelTrace: "TRACE",
+	LevelDebug: "DEBUG",
+	LevelInfo:  "INFO",
+	LevelWarn:  "WARN",
+	LevelError: "ERROR",
+	LevelFatal: "FATAL",
+	LevelOff:   "OFF",
+}
 
-type logger struct {
+var levelByStr = map[string]Level{
+	"ALL":   LevelAll,
+	"TRACE": LevelTrace,
+	"DEBUG": LevelDebug,
+	"INFO":  LevelInfo,
+	"WARN":  LevelWarn,
+	"ERROR": LevelError,
+	"FATAL": LevelFatal,
+	"OFF":   LevelOff,
+}
+
+type LogDispatcher func(w io.Writer, dateFormat string, name string, level Level, a ...any)
+
+type Logger struct {
 	name       string
 	dispatcher LogDispatcher
+	writer     io.Writer
+	logLevel   Level
+	dateFormat string
 }
 
-var dateFormat = "2006-01-02 15:04:05.000 Z07:00"
-var logLevel uint8
-var isDefined bool
+var (
+	DefaultDateFormat           = "2006-01-02 15:04:05.000 Z07:00"
+	DefaultWriter     io.Writer = os.Stdout
+	DefaultDispatcher           = DefaultLogDispatcher
+	DefaultLogLevel             = LevelInfo
+	globalLogger      *Logger
+)
 
-var globalLogger = New("")
-
-func SetLogLevel(level uint8) {
-	logLevel = level
-}
-
-func SetLogLevelStr(level string) {
-	logLevel = LogLevelIdByStr[level]
-}
-
-func SetDateFormat(format string) {
-	dateFormat = format
-}
-
-func New(name string) *logger {
-	return &logger{name: name, dispatcher: DefaultLogDispatcher}
-}
-
-func NewCustom(name string, dispatcher func(w io.Writer, name string, level uint8, a ...any)) *logger {
-	return &logger{name: name, dispatcher: dispatcher}
-}
-
-func GetInstance() *logger {
+func GetInstance() *Logger {
+	if globalLogger == nil {
+		globalLogger = New("")
+	}
 	return globalLogger
 }
 
-func (this *logger) IsEnabled(level uint8) bool {
-	return logLevel >= level
+func SetDefaultDateFormat(format string) error {
+	DefaultDateFormat = format
+	return nil
 }
 
-func (this *logger) Log(level uint8, a ...any) {
-	if this.IsEnabled(level) {
-		this.dispatcher(os.Stdout, this.name, level, a...)
+func SetDefaultOutput(writer io.Writer) {
+	DefaultWriter = writer
+}
+
+func SetDefaultLogDispatcher(dispatcher LogDispatcher) {
+	DefaultDispatcher = dispatcher
+}
+
+func SetDefaultLogLevel(l Level) {
+	DefaultLogLevel = l
+}
+
+func New(name string) *Logger {
+	return &Logger{
+		name:       name,
+		dispatcher: DefaultDispatcher,
+		writer:     DefaultWriter,
+		logLevel:   DefaultLogLevel,
+		dateFormat: DefaultDateFormat,
 	}
 }
 
-func (this *logger) IsFatalEnabled() bool {
-	return this.IsEnabled(LogLevelFatal)
+func (l *Logger) SetLogLevel(lv Level) {
+	l.logLevel = lv
 }
 
-func (this *logger) Fatal(a ...any) {
-	this.Log(LogLevelFatal, a...)
+func (l *Logger) SetLogLevelStr(levelStr string) {
+	l.logLevel = LevelFromString(levelStr)
 }
 
-func (this *logger) IsErrorEnabled() bool {
-	return this.IsEnabled(LogLevelError)
+func (l *Logger) SetDateFormat(format string) error {
+	l.dateFormat = format
+	return nil
 }
 
-func (this *logger) Error(a ...any) {
-	this.Log(LogLevelError, a...)
+func (l *Logger) SetLogDispatcher(dispatcher LogDispatcher) {
+	l.dispatcher = dispatcher
 }
 
-func (this *logger) IsWarnEnabled() bool {
-	return this.IsEnabled(LogLevelWarn)
+func (l *Logger) SetOutput(writer io.Writer) {
+	l.writer = writer
 }
 
-func (this *logger) Warn(a ...any) {
-	this.Log(LogLevelWarn, a...)
+func (l *Logger) IsEnabled(lv Level) bool {
+	return l.logLevel >= lv
 }
 
-func (this *logger) IsInfoEnabled() bool {
-	return this.IsEnabled(LogLevelInfo)
+func (l *Logger) Log(lv Level, a ...any) {
+	if l.IsEnabled(lv) {
+		l.dispatcher(l.writer, l.dateFormat, l.name, lv, a...)
+	}
 }
 
-func (this *logger) Info(a ...any) {
-	this.Log(LogLevelInfo, a...)
+func (l *Logger) Fatal(a ...any) {
+	l.Log(LevelFatal, a...)
 }
 
-func (this *logger) IsDebugEnabled() bool {
-	return this.IsEnabled(LogLevelDebug)
+func (l *Logger) Error(a ...any) {
+	l.Log(LevelError, a...)
 }
 
-func (this *logger) Debug(a ...any) {
-	this.Log(LogLevelDebug, a...)
+func (l *Logger) Warn(a ...any) {
+	l.Log(LevelWarn, a...)
 }
 
-func (this *logger) IsTraceEnabled() bool {
-	return this.IsEnabled(LogLevelTrace)
+func (l *Logger) Info(a ...any) {
+	l.Log(LevelInfo, a...)
 }
 
-func (this *logger) Trace(a ...any) {
-	this.Log(LogLevelTrace, a...)
+func (l *Logger) Debug(a ...any) {
+	l.Log(LevelDebug, a...)
 }
 
-func (this *logger) IsAllEnabled() bool {
-	return this.IsEnabled(LogLevelAll)
+func (l *Logger) Trace(a ...any) {
+	l.Log(LevelTrace, a...)
 }
 
-func DefaultLogDispatcher(w io.Writer, name string, level uint8, a ...any) {
-	if name != "" {
-		name = " " + name + ":"
+func DefaultLogDispatcher(w io.Writer, dateFormat string, name string, l Level, a ...any) {
+	message := ""
+
+	if dateFormat != "" {
+		message = time.Now().Format(dateFormat) + " - "
 	}
 
-	levelStr := LogLevelStrById[level]
+	levelStr := l.String()
 	if len(levelStr) == 4 {
 		levelStr += " "
 	}
+	message += levelStr
 
-	fmt.Fprint(w, time.Now().Format(dateFormat)+" - "+levelStr+name+" ")
-	fmt.Fprintln(w, a...)
+	if name != "" {
+		message += " " + name + ":"
+	}
+
+	fmt.Fprintln(w, message, fmt.Sprint(a...))
 }
