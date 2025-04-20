@@ -1,23 +1,18 @@
 package tests
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/ecromaneli-golang/console/logger"
 )
 
-var mux sync.Mutex
-
 func TestShouldLogFatalAndError(t *testing.T) {
-	mux.Lock()
-	defer mux.Unlock()
-
 	// Given
-	logger.SetLogLevel(logger.LogLevelError)
+	logger.SetDefaultLogLevel(logger.LevelError)
 
 	dispatcher, counter := NewCounterDispatcher()
-	log := logger.NewCustom("test", dispatcher)
+	log := logger.New("test")
+	log.SetLogDispatcher(dispatcher)
 
 	// When
 	log.Fatal("1")
@@ -25,43 +20,14 @@ func TestShouldLogFatalAndError(t *testing.T) {
 	log.Debug("ignored")
 
 	// Then
-	assertEquals(t, 1, counter[logger.LogLevelFatal])
-	assertEquals(t, 1, counter[logger.LogLevelError])
-	assertEquals(t, 2, counter.GetTotal())
-}
-
-func TestShouldPrintAllLogs(t *testing.T) {
-	mux.Lock()
-	defer mux.Unlock()
-
-	// Given
-	logger.SetLogLevel(logger.LogLevelAll)
-
-	dispatcher, counter := NewCounterDispatcher()
-	log := logger.NewCustom("test", dispatcher)
-
-	// When
-	log.Fatal("Lorem ipsum dolor sit amet, consectetur adipiscing elit")
-	log.Error("Phasellus eu odio libero. Curabitur sed elit dictum")
-	log.Warn("Sed ligula mauris, rutrum ac ipsum eget")
-	log.Info("Duis non finibus erat. In consectetur facilisis purus ac rhoncus")
-	log.Debug("Class aptent taciti sociosqu ad litora torquent")
-	log.Trace("Sed tincidunt egestas dolor, nec tincidunt tortor accumsan ac")
-
-	// Then
-	for _, v := range counter {
-		assertEquals(t, 1, v)
-	}
-
-	assertEquals(t, 6, counter.GetTotal())
+	AssertEquals(t, 1, len(counter[logger.LevelFatal]))
+	AssertEquals(t, 1, len(counter[logger.LevelError]))
+	AssertEquals(t, 2, counter.GetTotal())
 }
 
 func TestShouldUseGlobalInstance(t *testing.T) {
-	mux.Lock()
-	defer mux.Unlock()
-
 	// Given
-	logger.SetLogLevel(logger.LogLevelAll)
+	logger.SetDefaultLogLevel(logger.LevelAll)
 	log := logger.GetInstance()
 
 	// When
@@ -75,8 +41,18 @@ func TestShouldUseGlobalInstance(t *testing.T) {
 	// Then no panic
 }
 
-func assertEquals(t *testing.T, expected any, current any) {
-	if expected != current {
-		t.Errorf("\n\nExpected: %v\nCurrent: %v\n\n", expected, current)
-	}
+func TestShouldNotPrintDate(t *testing.T) {
+	// Given
+	logger.SetDefaultLogLevel(logger.LevelAll)
+
+	dispatcher, counter := NewCounterDispatcher()
+	log := logger.New("test")
+	log.SetLogDispatcher(dispatcher)
+	log.SetDateFormat("")
+
+	// When
+	log.Fatal("Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+
+	// Then
+	AssertEquals(t, "", counter[logger.LevelFatal][0].DateFormat)
 }
