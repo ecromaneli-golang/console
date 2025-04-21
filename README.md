@@ -2,6 +2,10 @@
 
 A lightweight and flexible logging library for Go, designed to support multiple log levels, custom dispatchers, and configurable outputs. This library is ideal for applications that require structured and customizable logging.
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/ecromaneli-golang/console.svg)](https://pkg.go.dev/github.com/ecromaneli-golang/console)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ecromaneli-golang/console)](https://goreportcard.com/report/github.com/ecromaneli-golang/console)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Features
 
 - **Log Levels**: Supports multiple log levels (`Fatal`, `Error`, `Warn`, `Info`, `Debug`, `Trace`, etc.).
