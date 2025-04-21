@@ -43,6 +43,14 @@ func main() {
 }
 ```
 
+### Output
+
+```
+2025-04-20 15:04:05.000 Z07:00 - INFO  MyApp: Application started
+2025-04-20 15:04:05.000 Z07:00 - WARN  MyApp: This is a warning
+2025-04-20 15:04:05.000 Z07:00 - ERROR MyApp: An error occurred
+```
+
 ### Using the Global Logger
 
 ```go
@@ -59,6 +67,13 @@ func main() {
 	log.Debug("Debugging details")
 	log.Fatal("Critical failure")
 }
+```
+
+### Output
+
+```
+2025-04-20 15:04:05.000 Z07:00 - DEBUG Debugging details
+2025-04-20 15:04:05.000 Z07:00 - FATAL Critical failure
 ```
 
 ## Configuration
@@ -90,6 +105,12 @@ log.SetLogDispatcher(func(w io.Writer, dateFormat string, name string, level log
 })
 ```
 
+### Output
+
+```
+[TRACE] 15:04:05 - CustomLogger: Custom trace message
+```
+
 ## Log Levels
 
 The library supports the following log levels:
@@ -119,6 +140,12 @@ log.SetLogDispatcher(func(w io.Writer, dateFormat string, name string, level log
 log.Info("Custom log format")
 ```
 
+### Output
+
+```
+[INFO] 2025-04-20 15:04:05.000 Z07:00 - AdvancedLogger: Custom log format
+```
+
 ### Logging Without a Date
 
 To disable the date in logs, set an empty date format:
@@ -127,6 +154,12 @@ To disable the date in logs, set an empty date format:
 log := logger.New("NoDateLogger")
 log.SetDateFormat("")
 log.Info("This log has no date")
+```
+
+### Output
+
+```
+INFO NoDateLogger: This log has no date
 ```
 
 ## Testing
@@ -156,6 +189,13 @@ func TestLogger(t *testing.T) {
 		t.Errorf("Expected 2 logs, got %d", counter.GetTotal())
 	}
 }
+```
+
+### Output
+
+```
+2025-04-20 15:04:05.000 Z07:00 - INFO  TestLogger: Info message
+2025-04-20 15:04:05.000 Z07:00 - WARN  TestLogger: Warning message
 ```
 
 ## Author
