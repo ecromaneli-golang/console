@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func (l *Level) String() string {
 //
 // It returns the corresponding Level for the given string value.
 func LevelFromString(level string) Level {
-	return levelByStr[level]
+	return levelByStr[strings.ToUpper(level)]
 }
 
 var stringByLevel = map[Level]string{
@@ -126,6 +127,13 @@ func SetDefaultLogLevel(l Level) {
 	DefaultLogLevel = l
 }
 
+// SetDefaultLogLevelStr sets the default minimum level using a string representation.
+//
+// It converts the string to the corresponding Level and sets it as the default.
+func SetDefaultLogLevelStr(levelStr string) {
+	DefaultLogLevel = LevelFromString(levelStr)
+}
+
 // New creates a new logger with the given name and default settings.
 //
 // The name is included in log messages to identify their source.
@@ -178,6 +186,48 @@ func (l *Logger) SetOutput(writer io.Writer) {
 // A level is enabled if it is greater than or equal to the logger's level.
 func (l *Logger) IsEnabled(lv Level) bool {
 	return l.logLevel >= lv
+}
+
+// IsFatalEnabled returns true if fatal level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelFatal).
+func (l *Logger) IsFatalEnabled() bool {
+	return l.IsEnabled(LevelFatal)
+}
+
+// IsErrorEnabled returns true if error level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelError).
+func (l *Logger) IsErrorEnabled() bool {
+	return l.IsEnabled(LevelError)
+}
+
+// IsWarnEnabled returns true if warning level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelWarn).
+func (l *Logger) IsWarnEnabled() bool {
+	return l.IsEnabled(LevelWarn)
+}
+
+// IsInfoEnabled returns true if info level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelInfo).
+func (l *Logger) IsInfoEnabled() bool {
+	return l.IsEnabled(LevelInfo)
+}
+
+// IsDebugEnabled returns true if debug level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelDebug).
+func (l *Logger) IsDebugEnabled() bool {
+	return l.IsEnabled(LevelDebug)
+}
+
+// IsTraceEnabled returns true if trace level messages will be logged.
+//
+// This is a convenience method equivalent to IsEnabled(LevelTrace).
+func (l *Logger) IsTraceEnabled() bool {
+	return l.IsEnabled(LevelTrace)
 }
 
 // Log logs a message at the specified level.

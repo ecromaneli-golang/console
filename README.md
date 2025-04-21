@@ -62,7 +62,7 @@ import (
 
 func main() {
 	log := logger.GetInstance()
-	log.SetLogLevel(logger.LevelDebug)
+	log.SetLogLevelStr("DEBUG")
 
 	log.Debug("Debugging details")
 	log.Fatal("Critical failure")
@@ -115,16 +115,16 @@ log.SetLogDispatcher(func(w io.Writer, dateFormat string, name string, level log
 
 The library supports the following log levels:
 
-| Level       | Value | Description                     |
-|-------------|-------|---------------------------------|
-| `LevelOff`  | `0`   | Disables all logging.           |
-| `LevelFatal`| `5`   | Logs critical errors.           |
-| `LevelError`| `10`  | Logs errors.                    |
-| `LevelWarn` | `15`  | Logs warnings.                  |
-| `LevelInfo` | `20`  | Logs informational messages.    |
-| `LevelDebug`| `25`  | Logs debug messages.            |
-| `LevelTrace`| `30`  | Logs trace messages.            |
-| `LevelAll`  | `255` | Enables all logging levels.     |
+| LevelStr    | Level       | Value | Description                     |
+|-------------|-------------|-------|---------------------------------|
+| `OFF`       | `LevelOff`  | `0`   | Disables all logging.           |
+| `FATAL`     | `LevelFatal`| `5`   | Logs critical errors.           |
+| `ERROR`     | `LevelError`| `10`  | Logs errors.                    |
+| `WARN`      | `LevelWarn` | `15`  | Logs warnings.                  |
+| `INFO`      | `LevelInfo` | `20`  | Logs informational messages.    |
+| `DEBUG`     | `LevelDebug`| `25`  | Logs debug messages.            |
+| `TRACE`     | `LevelTrace`| `30`  | Logs trace messages.            |
+| `ALL`       | `LevelAll`  | `255` | Enables all logging levels.     |
 
 ## Advanced Usage
 

@@ -56,3 +56,50 @@ func TestShouldNotPrintDate(t *testing.T) {
 	// Then
 	AssertEquals(t, "", counter[logger.LevelFatal][0].DateFormat)
 }
+
+func TestShouldParseStringToLevel(t *testing.T) {
+	// Given
+	dispatcher, counter := NewCounterDispatcher()
+	log := logger.New("test")
+	log.SetLogDispatcher(dispatcher)
+
+	// When
+	log.SetLogLevelStr("fAtAL")
+	log.Fatal("Lorem ipsum dolor sit amet, consectetur adipiscing elit")
+	log.Error("Phasellus eu odio libero. Curabitur sed elit dictum")
+
+	// Then
+	AssertEquals(t, 1, len(counter[logger.LevelFatal]))
+	AssertEquals(t, 0, len(counter[logger.LevelError]))
+}
+
+func TestShouldNotTriggerDisabledCode(t *testing.T) {
+	// Given
+	dispatcher, _ := NewCounterDispatcher()
+	log := logger.New("test")
+	log.SetLogDispatcher(dispatcher)
+	log.SetLogLevelStr("fAtAL")
+
+	// When
+
+	if log.IsTraceEnabled() {
+		panic("Should not be enabled")
+	}
+	if log.IsDebugEnabled() {
+		panic("Should not be enabled")
+	}
+	if log.IsInfoEnabled() {
+		panic("Should not be enabled")
+	}
+	if log.IsWarnEnabled() {
+		panic("Should not be enabled")
+	}
+	if log.IsErrorEnabled() {
+		panic("Should not be enabled")
+	}
+	if !log.IsFatalEnabled() {
+		panic("Should be enabled")
+	}
+
+	// Then no panic
+}
