@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/ecromaneli-golang/console/logger"
@@ -102,4 +103,20 @@ func TestShouldNotTriggerDisabledCode(t *testing.T) {
 	}
 
 	// Then no panic
+}
+
+// Fixed by v1.3.1 - After change to fmt.Sprint(a...), the output was not concat with spaces anymore
+func TestShouldUseDefaultFormatting(t *testing.T) {
+	// Given
+	var output bytes.Buffer
+
+	log := logger.New("AnyName")
+	log.SetDateFormat("AnyDate")
+	log.SetOutput(&output)
+
+	// When
+	log.Warn("split", "test", 1, 2, 3)
+
+	// Then
+	AssertEquals(t, "AnyDate - WARN  AnyName: split test 1 2 3\n", output.String())
 }

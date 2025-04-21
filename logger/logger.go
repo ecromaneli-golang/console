@@ -301,5 +301,7 @@ func DefaultLogDispatcher(w io.Writer, dateFormat string, name string, l Level, 
 		message += " " + name + ":"
 	}
 
-	fmt.Fprintln(w, message, fmt.Sprint(a...))
+	message += " "
+
+	fmt.Fprint(w, message, fmt.Sprintln(a...))
 }
