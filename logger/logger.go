@@ -7,23 +7,36 @@ import (
 	"time"
 )
 
+// Level represents the severity of a log message.
 type Level uint8
 
 const (
-	LevelOff   Level = 0
+	// LevelOff disables all logging.
+	LevelOff Level = 0
+	// LevelFatal is for critical errors that cause application failure.
 	LevelFatal Level = 5
+	// LevelError is for runtime errors that don't cause application failure.
 	LevelError Level = 10
-	LevelWarn  Level = 15
-	LevelInfo  Level = 20
+	// LevelWarn is for potentially harmful situations.
+	LevelWarn Level = 15
+	// LevelInfo is for general information messages.
+	LevelInfo Level = 20
+	// LevelDebug is for detailed debugging information.
 	LevelDebug Level = 25
+	// LevelTrace is for the most fine-grained information.
 	LevelTrace Level = 30
-	LevelAll   Level = 255
+	// LevelAll enables all possible logging levels.
+	LevelAll Level = 255
 )
 
+// String returns the string representation of the log level.
 func (l *Level) String() string {
 	return stringByLevel[*l]
 }
 
+// LevelFromString converts a string representation to a Level.
+//
+// It returns the corresponding Level for the given string value.
 func LevelFromString(level string) Level {
 	return levelByStr[level]
 }
@@ -50,8 +63,10 @@ var levelByStr = map[string]Level{
 	"OFF":   LevelOff,
 }
 
+// LogDispatcher is a function type that handles formatting and writing log messages.
 type LogDispatcher func(w io.Writer, dateFormat string, name string, level Level, a ...any)
 
+// Logger provides methods for logging messages at different levels.
 type Logger struct {
 	name       string
 	dispatcher LogDispatcher
@@ -61,13 +76,20 @@ type Logger struct {
 }
 
 var (
-	DefaultDateFormat           = "2006-01-02 15:04:05.000 Z07:00"
-	DefaultWriter     io.Writer = os.Stdout
-	DefaultDispatcher           = DefaultLogDispatcher
-	DefaultLogLevel             = LevelInfo
-	globalLogger      *Logger
+	// DefaultDateFormat is the default format for timestamps in log messages.
+	DefaultDateFormat = "2006-01-02 15:04:05.000 Z07:00"
+	// DefaultWriter is the default output destination for log messages.
+	DefaultWriter io.Writer = os.Stdout
+	// DefaultDispatcher is the default function used to format and write log messages.
+	DefaultDispatcher = DefaultLogDispatcher
+	// DefaultLogLevel is the default level at which messages are logged.
+	DefaultLogLevel = LevelInfo
+	globalLogger    *Logger
 )
 
+// GetInstance returns the global logger instance, creating it if it doesn't exist.
+//
+// This provides a singleton pattern for accessing a shared logger.
 func GetInstance() *Logger {
 	if globalLogger == nil {
 		globalLogger = New("")
@@ -75,23 +97,38 @@ func GetInstance() *Logger {
 	return globalLogger
 }
 
+// SetDefaultDateFormat sets the default date format for new logger instances.
+//
+// The format should be compatible with Go's time.Format function.
 func SetDefaultDateFormat(format string) error {
 	DefaultDateFormat = format
 	return nil
 }
 
+// SetDefaultOutput sets the default writer for new logger instances.
+//
+// The writer is where log messages will be written.
 func SetDefaultOutput(writer io.Writer) {
 	DefaultWriter = writer
 }
 
+// SetDefaultLogDispatcher sets the default dispatcher function for new logger instances.
+//
+// The dispatcher controls how log messages are formatted and written.
 func SetDefaultLogDispatcher(dispatcher LogDispatcher) {
 	DefaultDispatcher = dispatcher
 }
 
+// SetDefaultLogLevel sets the default minimum level for new logger instances.
+//
+// Messages below this level will not be logged.
 func SetDefaultLogLevel(l Level) {
 	DefaultLogLevel = l
 }
 
+// New creates a new logger with the given name and default settings.
+//
+// The name is included in log messages to identify their source.
 func New(name string) *Logger {
 	return &Logger{
 		name:       name,
@@ -102,61 +139,101 @@ func New(name string) *Logger {
 	}
 }
 
+// SetLogLevel sets the minimum level at which messages will be logged.
+//
+// Messages below this level will not be logged.
 func (l *Logger) SetLogLevel(lv Level) {
 	l.logLevel = lv
 }
 
+// SetLogLevelStr sets the minimum log level using a string representation.
+//
+// It converts the string to the corresponding Level and sets it.
 func (l *Logger) SetLogLevelStr(levelStr string) {
 	l.logLevel = LevelFromString(levelStr)
 }
 
+// SetDateFormat sets the date format used in log messages.
+//
+// The format should be compatible with Go's time.Format function.
 func (l *Logger) SetDateFormat(format string) error {
 	l.dateFormat = format
 	return nil
 }
 
+// SetLogDispatcher sets the dispatcher function for this logger.
+//
+// The dispatcher controls how log messages are formatted and written.
 func (l *Logger) SetLogDispatcher(dispatcher LogDispatcher) {
 	l.dispatcher = dispatcher
 }
 
+// SetOutput sets the writer where log messages will be written.
 func (l *Logger) SetOutput(writer io.Writer) {
 	l.writer = writer
 }
 
+// IsEnabled returns true if the given level is enabled for logging.
+//
+// A level is enabled if it is greater than or equal to the logger's level.
 func (l *Logger) IsEnabled(lv Level) bool {
 	return l.logLevel >= lv
 }
 
+// Log logs a message at the specified level.
+//
+// If the level is enabled, the message is passed to the dispatcher.
 func (l *Logger) Log(lv Level, a ...any) {
 	if l.IsEnabled(lv) {
 		l.dispatcher(l.writer, l.dateFormat, l.name, lv, a...)
 	}
 }
 
+// Fatal logs a message at the fatal level.
+//
+// This should be used for critical errors that cause application failure.
 func (l *Logger) Fatal(a ...any) {
 	l.Log(LevelFatal, a...)
 }
 
+// Error logs a message at the error level.
+//
+// This should be used for runtime errors that don't cause application failure.
 func (l *Logger) Error(a ...any) {
 	l.Log(LevelError, a...)
 }
 
+// Warn logs a message at the warning level.
+//
+// This should be used for potentially harmful situations.
 func (l *Logger) Warn(a ...any) {
 	l.Log(LevelWarn, a...)
 }
 
+// Info logs a message at the info level.
+//
+// This should be used for general information messages.
 func (l *Logger) Info(a ...any) {
 	l.Log(LevelInfo, a...)
 }
 
+// Debug logs a message at the debug level.
+//
+// This should be used for detailed debugging information.
 func (l *Logger) Debug(a ...any) {
 	l.Log(LevelDebug, a...)
 }
 
+// Trace logs a message at the trace level.
+//
+// This should be used for the most fine-grained information.
 func (l *Logger) Trace(a ...any) {
 	l.Log(LevelTrace, a...)
 }
 
+// DefaultLogDispatcher is the default function for formatting and writing log messages.
+//
+// It formats the message with a timestamp, log level, name, and the message content.
 func DefaultLogDispatcher(w io.Writer, dateFormat string, name string, l Level, a ...any) {
 	message := ""
 
