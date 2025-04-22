@@ -285,23 +285,50 @@ func (l *Logger) Trace(a ...any) {
 //
 // It formats the message with a timestamp, log level, name, and the message content.
 func DefaultLogDispatcher(w io.Writer, dateFormat string, name string, l Level, a ...any) {
-	message := ""
+	estSize := 6
 
 	if dateFormat != "" {
-		message = time.Now().Format(dateFormat) + " - "
+		dateFormat = time.Now().Format(dateFormat)
+		estSize += len(dateFormat) + 3 // 3 for " - "
 	}
-
-	levelStr := l.String()
-	if len(levelStr) == 4 {
-		levelStr += " "
-	}
-	message += levelStr
 
 	if name != "" {
-		message += " " + name + ":"
+		estSize += len(name) + 2 // 2 for " :"
 	}
 
-	message += " "
+	message := fmt.Sprintln(a...)
 
-	fmt.Fprint(w, message, fmt.Sprintln(a...))
+	estSize += len(message)
+
+	var builder strings.Builder
+	builder.Grow(estSize)
+
+	// Add the timestamp if a date format is provided
+	if dateFormat != "" {
+		builder.WriteString(dateFormat)
+		builder.WriteString(" - ")
+	}
+
+	// Add the log level
+	levelStr := l.String()
+	builder.WriteString(levelStr)
+	if len(levelStr) == 4 {
+		builder.WriteByte(' ')
+	}
+
+	// Add the logger name if provided
+	if name != "" {
+		builder.WriteByte(' ')
+		builder.WriteString(name)
+		builder.WriteByte(':')
+	}
+
+	// Add a space before the message
+	builder.WriteByte(' ')
+
+	// Add the log message
+	builder.WriteString(message)
+
+	// Write the final message to the writer
+	fmt.Fprint(w, builder.String())
 }
