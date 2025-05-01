@@ -28,6 +28,10 @@ func (c *LogCounter) GetTotal() int {
 	return total
 }
 
+func UnformattedDispatcher(w io.Writer, _, _ string, _ logger.Level, a ...any) {
+	fmt.Fprint(w, a...)
+}
+
 func NewCounterDispatcher() (logger.LogDispatcher, LogCounter) {
 	counter := make(LogCounter)
 
