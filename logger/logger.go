@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/ecromaneli-golang/console/logger/async"
 )
 
 // Level represents the severity of a log message.
@@ -176,9 +178,41 @@ func (l *Logger) SetLogDispatcher(dispatcher LogDispatcher) {
 	l.dispatcher = dispatcher
 }
 
-// SetOutput sets the writer where log messages will be written.
+// SetOutput sets the output where log messages will be written.
 func (l *Logger) SetOutput(writer io.Writer) {
 	l.writer = writer
+}
+
+// SetAsyncOutput sets the output to an asynchronous writer.
+// Shorthand for l.SetOutput(async.NewAsyncWriter([...])).
+//
+// The bufferSize determines the number of pending writes that can be queued before blocking.
+// If the buffer is full, the log message will be written directly to the target writer.
+func (l *Logger) SetAsyncOutput(writer io.Writer, bufferSize int) {
+	if _, ok := l.writer.(*async.AsyncWriter); ok {
+		l.writer = writer
+	} else {
+		l.writer = async.NewAsyncWriter(writer, bufferSize)
+	}
+}
+
+// SetAsync sets the current output to an asynchronous writer.
+// Shorthand for l.SetOutput(async.NewAsyncWriter(currentOutput, bufferSize)).
+//
+// The bufferSize determines the number of pending writes that can be queued before blocking.
+// If the buffer is full, the log message will be written directly to the target writer.
+func (l *Logger) SetAsync(bufferSize int) {
+	if _, ok := l.writer.(*async.AsyncWriter); !ok {
+		l.writer = async.NewAsyncWriter(l.writer, bufferSize)
+	}
+}
+
+// SetSync sets the current output to synchronous mode.
+func (l *Logger) SetSync() {
+	if asyncWriter, ok := l.writer.(*async.AsyncWriter); ok {
+		asyncWriter.Flush()
+		l.writer = asyncWriter.Target()
+	}
 }
 
 // IsEnabled returns true if the given level is enabled for logging.
@@ -279,6 +313,50 @@ func (l *Logger) Debug(a ...any) {
 // This should be used for the most fine-grained information.
 func (l *Logger) Trace(a ...any) {
 	l.Log(LevelTrace, a...)
+}
+
+// Flush waits for all pending writes to complete.
+// It is only necessary if the logger is using an asynchronous writer.
+// Shorthand for logger.Output().Flush().
+func (l *Logger) Flush() {
+	if asyncWriter, ok := l.writer.(*async.AsyncWriter); ok {
+		asyncWriter.Flush()
+	}
+}
+
+// Name returns the name of the logger.
+//
+// The name is included in log messages to identify their source.
+func (l *Logger) Name() string {
+	return l.name
+}
+
+// Dispatcher returns the current log dispatcher function.
+//
+// The dispatcher controls how log messages are formatted and written.
+func (l *Logger) Dispatcher() LogDispatcher {
+	return l.dispatcher
+}
+
+// Output returns the current writer where log messages are written.
+//
+// This is the destination for all log messages.
+func (l *Logger) Output() io.Writer {
+	return l.writer
+}
+
+// LogLevel returns the minimum level at which messages will be logged.
+//
+// Messages below this level will not be logged.
+func (l *Logger) LogLevel() Level {
+	return l.logLevel
+}
+
+// DateFormat returns the date format used in log messages.
+//
+// The format is compatible with Go's time.Format function.
+func (l *Logger) DateFormat() string {
+	return l.dateFormat
 }
 
 // DefaultLogDispatcher is the default function for formatting and writing log messages.

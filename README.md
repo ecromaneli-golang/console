@@ -162,6 +162,75 @@ log.Info("This log has no date")
 INFO NoDateLogger: This log has no date
 ```
 
+## Asynchronous Logging
+
+This library supports asynchronous logging to improve performance in high-throughput applications. Asynchronous logging processes write operations in a background goroutine, allowing your application to continue execution without waiting for I/O operations to complete.
+
+### Using Asynchronous Output
+
+You can set a logger to use asynchronous output in two ways:
+
+```go
+// Method 1: Provide a writer to be wrapped in an async writer
+log := logger.New("AsyncLogger")
+log.SetAsyncOutput(os.Stdout, 1000)  // Buffer size of 1000 messages
+
+// Method 2: Make the current output asynchronous
+log := logger.New("AsyncLogger")
+log.SetAsync(1000)  // Buffer size of 1000 messages
+
+// Method 3: Manually creating the async writer
+asyncWriter := async.NewAsyncWriter(os.Stdout, 100)
+log := logger.New("AsyncLogger")
+log.SetOutput(asyncWriter)
+```
+
+### Flushing Pending Logs
+
+When using async logging, some logs may remain buffered. To ensure all logs are written before your application exits, use the `Flush` method:
+
+```go
+package main
+
+import (
+	"os"
+	
+	"github.com/ecromaneli-golang/console/logger"
+	"github.com/ecromaneli-golang/console/logger/async"
+)
+
+func main() {
+	// Create an async writer with a buffer size of 100	
+	log := logger.New("AsyncLogger")
+	log.SetAsync(1000)
+	log.SetLogLevel(logger.LevelInfo)
+	
+	for i := 0; i < 1000; i++ {
+		log.Info("Processing item", i)
+	}
+	
+	// Ensure all pending logs are written before exiting
+	log.Flush()
+}
+```
+
+### Performance Benefits
+
+Asynchronous logging can significantly improve performance by:
+
+- Reducing latency in your application's main execution path
+- Batching I/O operations for better throughput
+- Preventing slow I/O from blocking application execution
+
+### Buffer Size Considerations
+
+When setting up asynchronous logging, the buffer size parameter determines:
+- How many log messages can be queued for asynchronous processing
+- When the buffer is full, new log messages will be written synchronously
+- Memory usage (larger buffers use more memory)
+
+Choose a buffer size appropriate for your application's logging volume and memory constraints. For high-throughput applications, larger buffer sizes (e.g., 1000-10000) may be appropriate.
+
 ## Testing
 
 The library includes utilities for testing loggers, such as `NewCounterDispatcher` to count log messages by level.
@@ -197,6 +266,8 @@ func TestLogger(t *testing.T) {
 2025-04-20 15:04:05.000 Z07:00 - INFO  TestLogger: Info message
 2025-04-20 15:04:05.000 Z07:00 - WARN  TestLogger: Warning message
 ```
+
+
 
 ## Author
 
